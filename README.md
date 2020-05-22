@@ -32,6 +32,7 @@ import (
 //go:generate gorec --model Person --table people
 type Person struct {
 	PersonRecord  // This struct will be auto-generated
+	// You can add non-database fields here
 }
 
 // GoRecord will define many functions on Person already, 

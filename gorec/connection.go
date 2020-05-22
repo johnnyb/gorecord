@@ -1,0 +1,3 @@
+package gorec
+
+// Nothing here
