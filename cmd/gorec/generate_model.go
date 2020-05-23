@@ -58,7 +58,7 @@ func generateModel(db *sql.DB, cfg GorecConfig) {
 	for i := 0; i < len(columnNames); i++ {
 		cname := columnNames[i]
 		ctype := columnTypes[i]
-		fmt.Fprintf(fh, "\t%s %s%s", cname, ctype)
+		fmt.Fprintf(fh, "\t%s %s\n", cname, ctype)
 	}
 	fmt.Fprintf(fh, "}\n")
 }

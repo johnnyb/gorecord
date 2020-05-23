@@ -4,15 +4,17 @@ package main
 import (
 	"flag"
 	"github.com/johnnyb/gorecord/gorec"
+
+	// NOTE - all supported databases must be listed here
+	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 func main() {
 	cfg := NewGorecConfig()
 	parseFlags(&cfg)
 
-	gorec.AutoConnect()
-
-	db := gorec.GlobalConnection
+	db, err := gorec.AutoConnect()
+	panicIfError(err)
 
 	generateModel(db, cfg)
 }
