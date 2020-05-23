@@ -54,7 +54,7 @@ func generateModel(db *sql.DB, cfg GorecConfig) {
 		}
 	}
 
-	fmt.Fprintf(fh, "package %s\n\nimport (\n\t\"database/sql\"\n)\n\ntype PersonRecord struct {\n")
+	fmt.Fprintf(fh, "package %s\n\nimport (\n\t\"database/sql\"\n)\n\ntype PersonRecord struct {\n", cfg.Package)
 	for i := 0; i < len(columnNames); i++ {
 		cname := columnNames[i]
 		ctype := columnTypes[i]
