@@ -51,7 +51,7 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("SqlDriverNameHere", "SqlConnectionStringhere")
+	db, err := gorec.AutoConnect()
 	if err != nil {
 		panic(err)
 	}
