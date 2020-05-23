@@ -10,10 +10,9 @@ func main() {
 	cfg := NewGorecConfig()
 	parseFlags(&cfg)
 
-	db, err := gorec.GetStandardConnection()
-	if err != nil {
-		panic(err)
-	}
+	gorec.AutoConnect()
+
+	db := gorec.GlobalConnection
 
 	generateModel(db, cfg)
 }

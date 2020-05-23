@@ -3,10 +3,16 @@ package main
 import (
 	"fmt"
 	"bufio"
-	"io/ioutil"
+	// "io/ioutil"
 	"os"
 	"database/sql"
 )
+
+func panicIfError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
 func generateModel(db *sql.DB, cfg GorecConfig) {
 	fname := fmt.Sprintf("%s.impl.go", cfg.TableName)
@@ -18,36 +24,41 @@ func generateModel(db *sql.DB, cfg GorecConfig) {
 
 	qstring := fmt.Sprintf("SELECT * FROM %s LIMIT 1", cfg.TableName)
 	rows, err := db.Query(qstring)
-	ctypes := rows.ColumnTypes()
+	panicIfError(err)
 
-	columnNames := []string
-	columnTypes := []string
+	ctypes, err := rows.ColumnTypes()
+	panicIfError(err)
+
+	columnNames := []string{}
+	columnTypes := []string{}
 	packages := map[string]bool{}
 
-	for ctype := range ctypes {
+	for _, ctype := range ctypes {
 		name := ctype.Name()
 		nullable, _ := ctype.Nullable()
-		precision, scale, ok = ctype.DecimalSize()
-		dbtype := ctype.DatabaseTypeName()
+		// precision, scale, ok := ctype.DecimalSize()
+		// dbtype := ctype.DatabaseTypeName()
 		tp := ctype.ScanType()
-		tpName := tp.Name()
+		// tpName := tp.Name()
 		tpPackage := tp.PkgPath()
 		tpPartial := tp.String()
 
 		if tpPackage != "" {
-			packages[tpPackage] := true
+			packages[tpPackage] = true
 		}
-		columnNames := columnNames.append(name)
+		columnNames = append(columnNames, name)
 		if nullable {
-			columnTypes := columnTypes.append(tpPartial)
+			columnTypes = append(columnTypes, tpPartial)
 		} else {
-			columnTypes := columnTypes.append("*" + tpPartial)
+			columnTypes = append(columnTypes, "*" + tpPartial)
 		}
 	}
 
-	fmt.Fprintf(fh, "package %s\n\nimport (\n\t"database/sql"\n)\n\ntype PersonRecord struct {\n")
+	fmt.Fprintf(fh, "package %s\n\nimport (\n\t\"database/sql\"\n)\n\ntype PersonRecord struct {\n")
 	for i := 0; i < len(columnNames); i++ {
-		fmt.Fprintf("\t%s %s%s")
+		cname := columnNames[i]
+		ctype := columnTypes[i]
+		fmt.Fprintf(fh, "\t%s %s%s", cname, ctype)
 	}
-	fmt.Printf(fh, "}\n")
+	fmt.Fprintf(fh, "}\n")
 }

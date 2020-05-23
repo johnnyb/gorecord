@@ -6,7 +6,7 @@ type GorecConfig struct {
 	PrimaryKey string
 }
 
-func NewGorecConfig() {
+func NewGorecConfig() GorecConfig {
 	return GorecConfig{
 		PrimaryKey: "id",
 	}
