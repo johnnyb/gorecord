@@ -49,7 +49,7 @@ func IsInGlobalTransaction() bool {
 // in progress, this will happen (INCLUDING
 // the rollback) in the existing transaction.
 func WithGlobalTransaction(f Functor) error {
-	if(IsInTransaction()) {
+	if(IsInGlobalTransaction()) {
 		err := f()
 		if err != nil {
 			currentTransaction.Rollback()
