@@ -26,9 +26,17 @@ func TestUnderscore(t *testing.T) {
 	expect(t, val == "this_is_another_test", "Did not underscore string properly (%s)", val)
 }
 
+func TestTitleization(t *testing.T) {
+	ttl := Titleize("this is-aVeryInteresting_looking string")
+	expect(t, ttl == "This Is a Very Interesting Looking String", "Wrong Titleization")
+}
+
 func TestSingularization(t *testing.T) {
 	s := Singularize("chairs")
 	expect(t, s == "chair", "Wrong singular: %s", s)
+	expect(t, !IsSingular("People"), "Mistaken about singularity of People")
+	s = Singularize("People")
+	expect(t, s == "Person", "Wrong singular: %s", s)
 }
 
 func TestPluralization(t *testing.T) {

@@ -9,10 +9,17 @@ import (
 func init() {
 	RegisterSingularPlural("person", "people")
 	RegisterSingularPlural("sheep", "sheep")
+	RegisterNonTitleized("a")
+	RegisterNonTitleized("the")
 }
 
 var Plurals map[string]string = map[string]string{}
 var Singulars map[string]string = map[string]string{}
+var NonTitleized map[string]bool = map[string]bool{}
+
+func RegisterNonTitleized(str string) {
+	NonTitleized[str] = true
+}
 
 func RegisterSingularPlural(singular string, plural string) {
 	Plurals[singular] = plural
@@ -20,7 +27,16 @@ func RegisterSingularPlural(singular string, plural string) {
 }
 
 func Titleize(str string) string {
-	return str
+	comps := Componentize(str)
+	newcomps := []string{}
+	for _, comp := range comps {
+		if NonTitleized[comp] {
+			newcomps = append(newcomps, comp)
+		} else {
+			newcomps = append(newcomps, CapitalizeFirstLetter(comp))
+		}
+	}
+	return strings.Join(newcomps, " ")
 }
 
 func Camelize(str string) string {
@@ -39,12 +55,16 @@ func Tableize(str string) string {
 
 func IsSingular(str string) bool {
 	last := LastComponent(str)
-	if str == "" {
+	if last == "" {
 		return false
 	}
-	custom := Plurals[str]
+	custom := Plurals[last]
 	if custom != "" {
 		return true
+	}
+	custom = Singulars[last]
+	if custom != "" {
+		return false
 	}
 
 	_, lr := LastRune(last)
@@ -59,6 +79,10 @@ func IsPlural(str string) bool {
 	custom := Singulars[str]
 	if custom != "" {
 		return true
+	}
+	custom = Plurals[str]
+	if custom != "" {
+		return false
 	}
 	_, lr := LastRune(last)
 	return lr == 's'
