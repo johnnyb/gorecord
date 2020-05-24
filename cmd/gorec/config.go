@@ -9,6 +9,8 @@ type GorecConfig struct {
 	TableName string
 	Package string
 	PrimaryKey string
+	RawPrefix string
+	InternalPrefix string
 }
 
 func NewGorecConfig() GorecConfig {
@@ -19,5 +21,7 @@ func NewGorecConfig() GorecConfig {
 	return GorecConfig{
 		PrimaryKey: "id",
 		Package: os.Getenv("GOPACKAGE"),
+		RawPrefix: "Raw",
+		InternalPrefix: "Internal",
 	}
 }

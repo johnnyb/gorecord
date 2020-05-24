@@ -40,8 +40,16 @@ func Titleize(str string) string {
 }
 
 func Camelize(str string) string {
-	return str
+	comps := Componentize(str)
+	newcomps := []string{}
+	for _, comp := range comps {
+		newcomps = append(newcomps, CapitalizeFirstLetter(comp))
+	}
+	return strings.Join(newcomps, "")
+}
 
+func CamelizeLower(str string) string {
+	return UncapitalizeFirstLetter(Camelize(str))
 }
 
 func Humanize(str string) string {
@@ -133,7 +141,26 @@ func Componentize(str string) []string {
 	return results
 }
 
+func UncapitalizeFirstLetter(str string) string {
+	if str == "" {
+		return str
+	}
+
+	firstRune, sz := utf8.DecodeRuneInString(str)
+	if unicode.IsLower(firstRune) {
+		return str
+	}
+
+	firstRune = unicode.ToLower(firstRune)
+
+	return string(firstRune) + str[sz:]
+}
+
 func CapitalizeFirstLetter(str string) string {
+	if str == "" {
+		return str
+	}
+
 	firstRune, sz := utf8.DecodeRuneInString(str)
 	if unicode.IsUpper(firstRune) {
 		return str
