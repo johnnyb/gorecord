@@ -27,14 +27,18 @@ var GlobalConnection *sql.DB
 
 // If you want to set the connection manually, do this
 func SetConnection(conn *sql.DB) {
-	GlobalConnection = conn
 	currentTransaction = nil
+
+	GlobalConnection = conn
 	GlobalTransactionContext = conn
 }
 
 // If you want to automagically set the connection, do this
 func AutoConnect() (db *sql.DB, err error) {
 	db, err = sql.Open(os.Getenv("DB_DRIVER"), os.Getenv("DB_CONNECTION_STRING"))
+	if err == nil {
+		SetConnection(db)
+	}
 	return
 }
 
