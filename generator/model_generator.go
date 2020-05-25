@@ -1,9 +1,10 @@
-package main
+package generator
 
 import (
 	"fmt"
 	"strings"
 	"bufio"
+	"io"
 	// "io/ioutil"
 	"os"
 	"database/sql"
@@ -25,14 +26,19 @@ func panicIfError(err error) {
 	}
 }
 
-func generateModel(db *sql.DB, cfg GorecConfig) {
-	fname := fmt.Sprintf("%s.impl.go", cfg.TableName)
+func GenerateModelFile(db *sql.DB, cfg Config) {
+	fname := fmt.Sprintf("%s.impl.go", inflect.Underscore(cfg.Model))
 	f, err := os.Create(fname)
+	panicIfError(err)
 	defer f.Close()
 
 	fh := bufio.NewWriter(f)
 	defer fh.Flush()
 
+	WriteModel(fh, db, cfg)
+}
+
+func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	qstring := fmt.Sprintf("SELECT * FROM %s LIMIT 1", cfg.TableName)
 	rows, err := db.Query(qstring)
 	panicIfError(err)
@@ -95,10 +101,13 @@ func generateModel(db *sql.DB, cfg GorecConfig) {
 		fmt.Fprintf(fh, "func (rec *%s) %s() %s {\n\treturn rec.%s\n}\n\n", cfg.Model, cdata.FuncName, cdata.ColumnType, cdata.StructName)
 		fmt.Fprintf(fh, "func (rec *%s) Set%s(val %s) {\n\trec.%s = val\n}\n\n", cfg.Model, cdata.FuncName, cdata.ColumnType, cdata.StructName)
 	}
-	ctxFunc := fmt.Sprintf("%sGlobalTransactionContext", cfg.Model)
-	fmt.Fprintf(fh, "func %sGlobalConnection() *sql.DB {\n\treturn gorec.GlobalConnection\n}\n\n", cfg.Model)
-	fmt.Fprintf(fh, "func %sGlobalTransactionContext() gorec.Querier {\n\treturn gorec.GlobalTransactionContext\n}\n\n", cfg.Model)
 
-	fmt.Fprintf(fh, "func %sFind(key %s) (*%s, error) {\n\trows, err := %s().Query(\"SELECT %s FROM %s WHERE %s = $1\", key)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tdefer rows.Close()\n\n\trec := %s{\n\t\t%sRecord{\n\t\t\tInternalIsSaved: true,\n\t\t},\n\t}\n\tif rows.Next() {\n\t\trows.Scan(%s)\n\t\trec.Setup()\n\t\treturn &rec, nil\n\t} else {\n\t\treturn nil, nil\n\t}\n}\n\n", cfg.Model, keyColumn.ColumnType, cfg.Model, ctxFunc, allDbNamesStr, cfg.TableName, keyColumn.DbName, cfg.Model, cfg.Model, allStructPointersStr)
-	fmt.Fprintf(fh, "func (rec *%s) Setup() {\n}\n\n", cfg.Model)
+	ctxFunc := fmt.Sprintf("%sGlobalTransactionContext", cfg.Model)
+	cfg.WriteFunc(fh, "GlobalConnection", "() *sql.DB", "\treturn gorec.GlobalConnection\n")
+	cfg.WriteFunc(fh, "GlobalTransactionContext", "() gorec.Querier", "\treturn gorec.GlobalTransactionContext\n")
+	cfg.WriteFunc(fh, "New", fmt.Sprintf("() *%s", cfg.Model), fmt.Sprintf("\trec := %s{}\n\trec.InitializeNew()\n\treturn &rec\n", cfg.Model))
+	cfg.WriteFunc(fh, "Find", fmt.Sprintf("(key %s) (*%s, error)", keyColumn.ColumnType, cfg.Model), fmt.Sprintf("\trows, err := %s().Query(\"SELECT %s FROM %s WHERE %s = $1\", key)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tdefer rows.Close()\n\n\trec := %s{\n\t\t%sRecord{\n\t\t\t%sIsSaved: true,\n\t\t},\n\t}\n\tif rows.Next() {\n\t\trows.Scan(%s)\n\t\trec.InitializeExisting()\n\t\treturn &rec, nil\n\t} else {\n\t\treturn nil, nil\n\t}\n", ctxFunc, allDbNamesStr, cfg.TableName, keyColumn.DbName, cfg.Model, cfg.Model, cfg.InternalPrefix, allStructPointersStr))
+	cfg.WriteMethod(fh, "InitializeNew", "()", fmt.Sprintf("\trec.%sIsSaved = false\n", cfg.InternalPrefix))
+	cfg.WriteMethod(fh, "InitializeExisting", "()", fmt.Sprintf("\trec.%sIsSaved = true\n", cfg.InternalPrefix))
+	cfg.WriteMethod(fh, cfg.InternalPrefix + "ScanAllColumns", "(scanner gorec.RowScanner) error", fmt.Sprintf("\terr := scanner.Scan(%s)\n\tif err != nil {\n\t\treturn err\n\t}\n\trec.InitializeExisting()\n\treturn nil\n", allStructPointersStr))
 }
