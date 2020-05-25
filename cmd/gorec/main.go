@@ -17,6 +17,12 @@ func main() {
 		panic(err)
 	}
 
+	// Probably should separate out command config from generator config
+
+	// Open cfg.OriginalFile
+	// Look for functions
+	// Add them to SkipFunctions
+
 	generator.GenerateModelFile(db, cfg)
 }
 

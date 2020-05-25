@@ -13,6 +13,7 @@ type Config struct {
 	RawPrefix string
 	InternalPrefix string
 	SkipFunctions []string
+	OriginalFile string
 }
 
 func NewConfig() Config {
@@ -25,6 +26,7 @@ func NewConfig() Config {
 		Package: os.Getenv("GOPACKAGE"),
 		RawPrefix: "Raw",
 		InternalPrefix: "Internal",
+		OriginalFile: os.Getenv("GOFILE"),
 	}
 }
 
@@ -42,7 +44,6 @@ func (cfg *Config) WriteMethod(fh io.Writer, name string, signature string, body
 		fh.Write([]byte("func (rec *" + cfg.Model + ") " + name + signature + " {\n" + body + "}\n\n"))
 	}
 }
-
 
 func (cfg *Config) WriteFunc(fh io.Writer, name string,signature string, body string) {
 	name = cfg.Model + name
