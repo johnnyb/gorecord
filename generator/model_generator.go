@@ -25,6 +25,48 @@ func panicIfError(err error) {
 	}
 }
 
+func LoadColumnData(db *sql.DB, cfg Config) []ColumnData {
+	columnInfo := []ColumnData{}
+
+	qstring := fmt.Sprintf("SELECT * FROM %s LIMIT 1", cfg.TableName)
+	rows, err := db.Query(qstring)
+	panicIfError(err)
+
+	ctypes, err := rows.ColumnTypes()
+	panicIfError(err)
+
+	for _, ctype := range ctypes {
+		name := ctype.Name()
+		nullable, _ := ctype.Nullable()
+		// precision, scale, ok := ctype.DecimalSize()
+		// dbtype := ctype.DatabaseTypeName()
+		tp := ctype.ScanType()
+		// tpName := tp.Name()
+		tpPackage := tp.PkgPath()
+		tpPartial := tp.String()
+
+		if nullable {
+			tpPartial = "*" + tpPartial
+		}
+
+		funcName := inflect.Camelize(name)
+		structName := cfg.RawPrefix + funcName
+
+		cdata := ColumnData{
+			DbName: name,
+			StructName: structName,
+			FuncName: funcName,
+			ColumnType: tpPartial,
+			ColumnPackage: tpPackage,
+			Nullable: nullable,
+		}
+
+		columnInfo = append(columnInfo, cdata)
+	}
+
+	return columnInfo
+}
+
 func GenerateModelFile(db *sql.DB, cfg Config) {
 	fname := fmt.Sprintf("%s.impl.go", inflect.Underscore(cfg.Model))
 	f, err := os.Create(fname)
@@ -38,14 +80,8 @@ func GenerateModelFile(db *sql.DB, cfg Config) {
 }
 
 func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
-	qstring := fmt.Sprintf("SELECT * FROM %s LIMIT 1", cfg.TableName)
-	rows, err := db.Query(qstring)
-	panicIfError(err)
+	columnInfo := LoadColumnData(db, cfg)
 
-	ctypes, err := rows.ColumnTypes()
-	panicIfError(err)
-
-	columnInfo := []ColumnData{}
 	packages := map[string]bool{}
 	allDbNames := []string{}
 	allStructPointers := []string{}
@@ -53,45 +89,19 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	var keyColumn ColumnData
 	setDbValues := []string{}
 
-	for cidx, ctype := range ctypes {
-		name := ctype.Name()
-		nullable, _ := ctype.Nullable()
-		// precision, scale, ok := ctype.DecimalSize()
-		// dbtype := ctype.DatabaseTypeName()
-		tp := ctype.ScanType()
-		// tpName := tp.Name()
-		tpPackage := tp.PkgPath()
-		tpPartial := tp.String()
-
-		if tpPackage != "" {
-			packages[tpPackage] = true
+	for cidx, ctype := range columnInfo {
+		if ctype.ColumnPackage != "" {
+			packages[ctype.ColumnPackage] = true
 		}
-		if nullable {
-			tpPartial = "*" + tpPartial
+		allDbNames = append(allDbNames, ctype.DbName)
+		allStructPointers = append(allStructPointers, "&rec." + ctype.StructName)
+		allStructValues = append(allStructValues, "rec." + ctype.StructName)
+		setDbValues = append(setDbValues, ctype.DbName + " = $" + fmt.Sprintf("%d", cidx))
+		if ctype.DbName == cfg.PrimaryKey {
+			keyColumn = ctype
 		}
-
-		funcName := inflect.Camelize(name)
-		structName := cfg.RawPrefix + funcName
-
-		allDbNames = append(allDbNames, name)
-		allStructPointers = append(allStructPointers, "&rec." + structName)
-		allStructValues = append(allStructValues, "rec." + structName)
-		setDbValues = append(setDbValues, name + " = $" + fmt.Sprintf("%d", cidx))
-
-		cdata := ColumnData{
-			DbName: name,
-			StructName: structName,
-			FuncName: funcName,
-			ColumnType: tpPartial,
-			ColumnPackage: tpPackage,
-			Nullable: nullable,
-		}
-		if name == cfg.PrimaryKey {
-			keyColumn = cdata
-		}
-
-		columnInfo = append(columnInfo, cdata)
 	}
+
 	allDbNamesStr := strings.Join(allDbNames, ", ")
 	allStructPointersStr := strings.Join(allStructPointers, ", ")
 	allStructValuesStr := strings.Join(allStructValues, ", ")

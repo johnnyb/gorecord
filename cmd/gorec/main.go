@@ -9,9 +9,15 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
+type Config struct {
+	Action string
+}
+
 func main() {
 	cfg := generator.NewConfig()
-	parseFlags(&cfg)
+	cmdCfg := Config{}
+	cmdCfg.Action = "model"
+	parseFlags(&cmdCfg, &cfg)
 	db, err := gorec.AutoConnect()
 	if err != nil {
 		panic(err)
@@ -26,7 +32,8 @@ func main() {
 	generator.GenerateModelFile(db, cfg)
 }
 
-func parseFlags(cfg *generator.Config) {
+func parseFlags(cmdCfg *Config, cfg *generator.Config) {
+	flag.StringVar(&cmdCfg.Action, "action", cmdCfg.Action, "What action to perform - model (default), has_many, has_one, or belongs_to")
 	flag.StringVar(&cfg.Model, "model", cfg.Model, "The name of the model to generate")
 	flag.StringVar(&cfg.TableName, "table", cfg.TableName, "The name of the table for the model")
 	flag.StringVar(&cfg.Package, "pkg", cfg.Package, "The name of the package to use")
