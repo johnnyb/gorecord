@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"github.com/johnnyb/gorecord/gorec"
 	"github.com/johnnyb/gorecord/generator"
+	"github.com/johnnyb/gorecord/gorec"
 
 	// NOTE - all supported databases must be listed here
 	_ "github.com/jackc/pgx/v4/stdlib"

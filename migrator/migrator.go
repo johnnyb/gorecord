@@ -12,7 +12,7 @@ func MigrateWithDirectory() {
 }
 
 func UpMigrateWithFile() {
-	// Make sure the migration table exists, create it if it doesn't
+	// Make sure the migration table exists, create it if it doesn't (schema_migrations with varchar `version` field)
 	// Take filename and find migration identifier
 	// Read file for commands
 	// Execute commands (in transaction?)
