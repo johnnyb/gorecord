@@ -37,6 +37,8 @@ func WriteHasMany(fh io.Writer, db *sql.DB, cfg Config) {
 	if targetColumnName == "" {
 		targetColumnName = inflect.Underscore(cfg.Model) + "_id"
 	}
+	targetFieldName := inflect.Camelize(targetColumnName)
 
 	fmt.Fprintf(fh, "func (rec *%s) %s() ([]*%s, error) {\n\treturn %sQuerySimple(\"where %s = %s\", rec.PrimaryKey())\n}\n\n", cfg.Model, cfg.Relationship, targetModel, targetModel, targetColumnName, "$1")
+	fmt.Fprintf(fh, "func (rec *%s) %sBuild() (*%s) {\n\tnewrec := %sNew()\n\tnewrec.Set%s(rec.PrimaryKey())\n\treturn newrec\n}\n\n", cfg.Model, cfg.Relationship, targetModel, targetModel, targetFieldName)
 }
