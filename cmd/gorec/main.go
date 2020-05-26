@@ -29,7 +29,11 @@ func main() {
 	// Look for functions
 	// Add them to SkipFunctions
 
-	generator.GenerateModelFile(db, cfg)
+	if cmdCfg.Action == "HasMany" {
+		generator.GenerateHasManyFunc(db, cfg)
+	} else {
+		generator.GenerateModelFile(db, cfg)
+	}
 }
 
 func parseFlags(cmdCfg *Config, cfg *generator.Config) {
@@ -37,6 +41,9 @@ func parseFlags(cmdCfg *Config, cfg *generator.Config) {
 	flag.StringVar(&cfg.Model, "model", cfg.Model, "The name of the model to generate")
 	flag.StringVar(&cfg.TableName, "table", cfg.TableName, "The name of the table for the model")
 	flag.StringVar(&cfg.Package, "pkg", cfg.Package, "The name of the package to use")
+	flag.StringVar(&cfg.Relationship, "relationship", cfg.Relationship, "The relationship to generate")
+	flag.StringVar(&cfg.TargetModel, "targetmodel", cfg.TargetModel, "The target model to use")
+	flag.StringVar(&cfg.ForeignKey, "foreignkey", cfg.ForeignKey, "The foreign key to use")
 	flag.Var((*AppendSliceValue)(&cfg.SkipFunctions), "skipfunction", "One per argument of functions to skip generating")
 	flag.Parse()
 }

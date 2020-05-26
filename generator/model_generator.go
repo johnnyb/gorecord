@@ -25,48 +25,6 @@ func panicIfError(err error) {
 	}
 }
 
-func LoadColumnData(db *sql.DB, cfg Config) []ColumnData {
-	columnInfo := []ColumnData{}
-
-	qstring := fmt.Sprintf("SELECT * FROM %s LIMIT 1", cfg.TableName)
-	rows, err := db.Query(qstring)
-	panicIfError(err)
-
-	ctypes, err := rows.ColumnTypes()
-	panicIfError(err)
-
-	for _, ctype := range ctypes {
-		name := ctype.Name()
-		nullable, _ := ctype.Nullable()
-		// precision, scale, ok := ctype.DecimalSize()
-		// dbtype := ctype.DatabaseTypeName()
-		tp := ctype.ScanType()
-		// tpName := tp.Name()
-		tpPackage := tp.PkgPath()
-		tpPartial := tp.String()
-
-		if nullable {
-			tpPartial = "*" + tpPartial
-		}
-
-		funcName := inflect.Camelize(name)
-		structName := cfg.RawPrefix + funcName
-
-		cdata := ColumnData{
-			DbName: name,
-			StructName: structName,
-			FuncName: funcName,
-			ColumnType: tpPartial,
-			ColumnPackage: tpPackage,
-			Nullable: nullable,
-		}
-
-		columnInfo = append(columnInfo, cdata)
-	}
-
-	return columnInfo
-}
-
 func GenerateModelFile(db *sql.DB, cfg Config) {
 	fname := fmt.Sprintf("%s.impl.go", inflect.Underscore(cfg.Model))
 	f, err := os.Create(fname)
@@ -80,7 +38,10 @@ func GenerateModelFile(db *sql.DB, cfg Config) {
 }
 
 func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
-	columnInfo := LoadColumnData(db, cfg)
+	if cfg.TableName == "" {
+		cfg.TableName = inflect.Pluralize(inflect.Underscore(cfg.Model))
+	}
+	columnInfo := LoadColumnData(db, cfg, cfg.TableName)
 
 	packages := map[string]bool{}
 	allDbNames := []string{}
@@ -126,9 +87,10 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	cfg.WriteMethod(fh, "InitializeExisting", "()", fmt.Sprintf("\trec.%sIsSaved = true\n", cfg.InternalPrefix))
 	cfg.WriteMethod(fh, cfg.InternalPrefix + "ScanAllColumns", "(scanner gorec.RowScanner) error", fmt.Sprintf("\terr := scanner.Scan(%s)\n\tif err != nil {\n\t\treturn err\n\t}\n\trec.InitializeExisting()\n\treturn nil\n", allStructPointersStr))
 	cfg.WriteFunc(fh, cfg.InternalPrefix + "DbAttributeNamesString", "() string", fmt.Sprintf("\treturn \"%s\"\n", allDbNamesStr))
-	cfg.WriteFunc(fh, "SimpleQueryWithQuerier", fmt.Sprintf("(querier gorec.Querier, clause string, args ...interface{}) ([]*%s, error)", cfg.Model), fmt.Sprintf("\trows, err := querier.Query(\"SELECT %s FROM %s \" + clause, args...)\n\tresults := []*%s{}\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tfor rows.Next() {\n\t\tnextres := &%s{}\n\t\terr = nextres.%sScanAllColumns(rows)\n\t\tif err != nil {\n\t\t\treturn results, err\n\t\t}\n\t\tresults = append(results, nextres)\n\t}\n\treturn results, nil\n", allDbNamesStr, cfg.TableName, cfg.Model, cfg.Model, cfg.InternalPrefix))
-	cfg.WriteFunc(fh, "SimpleQuery", fmt.Sprintf("(clause string, args ...interface{}) ([]*%s, error)", cfg.Model), fmt.Sprintf("\treturn %sSimpleQueryWithQuerier(%s(), clause, args...)\n", cfg.Model, ctxFunc))
+	cfg.WriteFunc(fh, "QuerySimpleWithQuerier", fmt.Sprintf("(querier gorec.Querier, clause string, args ...interface{}) ([]*%s, error)", cfg.Model), fmt.Sprintf("\trows, err := querier.Query(\"SELECT %s FROM %s \" + clause, args...)\n\tresults := []*%s{}\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tfor rows.Next() {\n\t\tnextres := &%s{}\n\t\terr = nextres.%sScanAllColumns(rows)\n\t\tif err != nil {\n\t\t\treturn results, err\n\t\t}\n\t\tresults = append(results, nextres)\n\t}\n\treturn results, nil\n", allDbNamesStr, cfg.TableName, cfg.Model, cfg.Model, cfg.InternalPrefix))
+	cfg.WriteFunc(fh, "QuerySimple", fmt.Sprintf("(clause string, args ...interface{}) ([]*%s, error)", cfg.Model), fmt.Sprintf("\treturn %sQuerySimpleWithQuerier(%s(), clause, args...)\n", cfg.Model, ctxFunc))
 	cfg.WriteMethod(fh, "Validate", "() bool", "\treturn true\n")
+	cfg.WriteMethod(fh, "PrimaryKey", fmt.Sprintf("() %s", keyColumn.ColumnType), fmt.Sprintf("\treturn rec.%s\n", keyColumn.StructName))
 	cfg.WriteMethod(fh, "IsSaved", "() bool", fmt.Sprintf("\treturn rec.%sIsSaved\n", cfg.InternalPrefix))
 	if keyColumn.ColumnType == "string" {
 		cfg.WriteMethod(fh, fmt.Sprintf("%sPrimaryKeyIsPresent", cfg.InternalPrefix), "() bool", fmt.Sprintf("\treturn rec.%s != \"\"\n", keyColumn.StructName))

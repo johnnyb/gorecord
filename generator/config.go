@@ -14,6 +14,11 @@ type Config struct {
 	InternalPrefix string
 	SkipFunctions []string
 	OriginalFile string
+
+	// HasMany
+	Relationship string
+	TargetModel string
+	ForeignKey string
 }
 
 func NewConfig() Config {
