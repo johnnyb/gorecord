@@ -71,7 +71,7 @@ func WithGlobalTransaction(f Functor) error {
 
 // If you want a one-off transaction, use this
 func WithDBTransaction(db *sql.DB, f TransactionFunctor) error {
-	tx, err := GlobalConnection.Begin()
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}

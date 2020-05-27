@@ -1,3 +1,4 @@
 environment
 cmd/gorec/gorec
 testme
+go.sum
