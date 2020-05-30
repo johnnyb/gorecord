@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/johnnyb/gorecord/gorec"
 	"sort"
 )
@@ -28,8 +29,8 @@ func RegisterMigration(v string, up MigrationFunction, down MigrationFunction) {
 }
 
 // DownMigrationNotPermitted is the standard down function for not allowing a down migration
-func DownMigrationNotPermitted(conn gorec.Querier) {
-	panic("Down migration not permitted")
+func DownMigrationNotPermitted(conn gorec.Querier) error {
+	return errors.New("Down migration not permitted")
 }
 
 // IsMigrationCompleted checks to see if a given migration has occurred
