@@ -38,6 +38,9 @@ func main() {
 	case "HasMany":
 		generator.GenerateHasManyFunc(db, cfg)
 
+	case "BelongsTo":
+		generator.GenerateBelongsToFunc(db, cfg)
+
 	case "model":
 		generator.GenerateModelFile(db, cfg)
 
