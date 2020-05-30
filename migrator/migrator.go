@@ -3,6 +3,7 @@ package migrator
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/johnnyb/gorecord/gorec"
 	"sort"
 )
@@ -61,9 +62,9 @@ func prepareMigrations() {
 }
 
 // MigrateRegisteredMigrations is the automagic function to do all the necessary migrations
-func MigrateRegisteredMigrations() {
+func MigrateRegisteredMigrations() error {
 	prepareMigrations()
-	PerformUpMigrationsToVersion(gorec.GlobalConnection, registeredMigrations, registeredMigrations[len(registeredMigrations)-1].Version, true)
+	return PerformUpMigrationsToVersion(gorec.GlobalConnection, registeredMigrations, registeredMigrations[len(registeredMigrations)-1].Version, true)
 }
 
 // PerformUpMigrationsToVersion uses the given connection to perform all of the migrations until it gets to the version specified (including the version specified)
@@ -102,6 +103,7 @@ func AutoCreateSchemaTableIfNecessary(conn gorec.Querier) {
 
 // UpMigrate runs a given migration up
 func UpMigrate(conn gorec.Querier, migration Migration) error {
+	fmt.Printf("Migrating Up: %s", migration.Version)
 	err := migration.UpMigrator(conn)
 	if err != nil {
 		return err
