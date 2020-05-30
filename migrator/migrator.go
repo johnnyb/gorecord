@@ -3,7 +3,6 @@ package migrator
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/johnnyb/gorecord/gorec"
 	"sort"
 )
@@ -36,7 +35,7 @@ func DownMigrationNotPermitted(conn gorec.Querier) error {
 
 // IsMigrationCompleted checks to see if a given migration has occurred
 func IsMigrationCompleted(db gorec.Querier, version string) bool {
-	rows, err := db.Query("SELECT version FROM schema_migrations")
+	rows, err := db.Query("SELECT version FROM schema_migrations where version = $1", version)
 	if err != nil {
 		return true // If we don't know, pretend it has been done
 	}
@@ -64,7 +63,7 @@ func prepareMigrations() {
 // MigrateRegisteredMigrations is the automagic function to do all the necessary migrations
 func MigrateRegisteredMigrations() error {
 	prepareMigrations()
-	return PerformUpMigrationsToVersion(gorec.GlobalConnection, registeredMigrations, registeredMigrations[len(registeredMigrations)-1].Version, true)
+	return PerformUpMigrationsToVersion(gorec.GlobalConnection, registeredMigrations, registeredMigrations[len(registeredMigrations)-1].Version, false)
 }
 
 // PerformUpMigrationsToVersion uses the given connection to perform all of the migrations until it gets to the version specified (including the version specified)
@@ -72,7 +71,7 @@ func PerformUpMigrationsToVersion(conn *sql.DB, migrations []Migration, targetVe
 	AutoCreateSchemaTableIfNecessary(conn) // ignore errors because if the table already exists we don't care
 
 	for _, migration := range registeredMigrations {
-		if IsMigrationCompleted(conn, migration.Version) {
+		if !IsMigrationCompleted(conn, migration.Version) {
 			if useTransactions {
 				err := gorec.WithDBTransaction(conn, func(tx *sql.Tx) error {
 					return UpMigrate(tx, migration)
@@ -103,7 +102,6 @@ func AutoCreateSchemaTableIfNecessary(conn gorec.Querier) {
 
 // UpMigrate runs a given migration up
 func UpMigrate(conn gorec.Querier, migration Migration) error {
-	fmt.Printf("Migrating Up: %s", migration.Version)
 	err := migration.UpMigrator(conn)
 	if err != nil {
 		return err
