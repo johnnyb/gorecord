@@ -15,6 +15,11 @@ This is a brand new project, so don't expect full magic.  Also, currently this e
 
 For some of the thinking behind the way that this project is stuctured, see this short article on [Automated Code Generation](https://mindmatters.ai/2020/05/automated-code-generation-tools-can-solve-problems/).
 
+## IMPORTANT
+
+At the moment, `go generate` only works if there is at least one record in the database.
+So, when doing the examples, after the migration, add a record manually before running `go generate`.  I hope to fix this shortly.
+
 ## Installing
 
 First, grab the generating command:
@@ -222,6 +227,8 @@ the first `go:generate` command in the file:
 This will add a function `.Cars()` to any person object to retrieve the related cars objects (as well as an error field).
 Additionally, you will get a `.CarsBuild()` function to create a new Car object that is
 already setup with the relationship.
+
+Don't forget to run `go generate` in the `models` directory to make sure the files are implemented!
 
 ### Enjoy!
 
