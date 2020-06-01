@@ -85,14 +85,12 @@ the database will be responsible for generating primary keys.
 
 ### Connecting your code to the database and migrations
 
-Now, in your `main.go` file, add the following imports:
+Now, in your `main.go` file, add the following to your imports list:
 ```
-import (
-	"github.com/johnnyb/gorecord/gorec"
-	"github.com/johnnyb/gorecord/migrator"
-	_ "github.com/jackc/pgx/v4/stdlib"       // Load the database driver
-	_ "example.com/testprogram/migrations"   // Load your migrations
-)
+"github.com/johnnyb/gorecord/gorec"
+"github.com/johnnyb/gorecord/migrator"
+_ "github.com/jackc/pgx/v4/stdlib"       // Load the database driver
+_ "example.com/testprogram/migrations"   // Load your migrations
 ```
 Now add the following code to your `main()` function:
 ```
@@ -126,7 +124,7 @@ put in the following code:
 package models
 
 //go:generate gorec -model Person
-type Person Struct {
+type Person struct {
 	PersonRecord
 }
 ```
@@ -163,20 +161,22 @@ Then, add the following code to the *end* of the `main()` function:
 rec := models.PersonNew()
 rec.SetName("Bob")
 rec.SetDescription("Bob is a Great Guy")
-err := rec.Save()
+err = rec.Save()
 if(err != nil) {
 	panic(err)
 }
-fmt.Prtinf("Bob's new record ID is %d", rec.Id())
+fmt.Printf("Bob's new record ID is %d\n", rec.Id())
 ```
 
 If you want to get that same record again, you can add this code:
 ```
-bobrec := models.PersonFind(rec.Id())
+bobrec, err := models.PersonFind(rec.Id())
+fmt.Printf("Found record %d named %s\n", bobrec.Id(), bobrec.Name());
 ```
 If you want to find Bob by his name, you can add this code:
 ```
-bobrecs := models.PersonQuerySimple("where name = $1", rec.Name())
+bobrecs, err := models.PersonQuerySimple("where name = $1", rec.Name())
+fmt.Printf("Found %d records named Bob\n", len(bobrecs))
 ```
 This will return a slice of `Person`s named `Bob`.
 
@@ -192,11 +192,11 @@ gorec -action migration -named create_cars -directory migrations
 ```
 Put this in the migration:
 ```
-err := conn.Exec("CREATE TABLE cars (id serial PRIMARY KEY, person_id int, make text, model text, year text)")
+_, err := conn.Exec("CREATE TABLE cars (id serial PRIMARY KEY, person_id int, make text, model text, year text)")
 return err
 ```
 
-Run your program (`./testprogram`)to perform the migration.  Now add the model.
+Build and run your program (`./testprogram`)to perform the migration.  Now add the model.
 In `models/car.go`:
 
 ```
