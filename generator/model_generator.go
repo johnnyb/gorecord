@@ -10,21 +10,6 @@ import (
 	"github.com/johnnyb/gorecord/inflect"
 )
 
-type ColumnData struct {
-	DbName string
-	StructName string
-	FuncName string
-	ColumnType string
-	ColumnPackage string
-	Nullable bool
-}
-
-func panicIfError(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func GenerateModelFile(db *sql.DB, cfg Config) {
 	fname := fmt.Sprintf("%s.impl.go", inflect.Underscore(cfg.Model))
 	f, err := os.Create(fname)

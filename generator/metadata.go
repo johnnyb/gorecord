@@ -6,6 +6,15 @@ import (
 	"github.com/johnnyb/gorecord/inflect"
 )
 
+type ColumnData struct {
+	DbName string
+	StructName string
+	FuncName string
+	ColumnType string
+	ColumnPackage string
+	Nullable bool
+}
+
 func LoadColumnData(db *sql.DB, cfg Config, tableName string) []ColumnData {
 	columnInfo := []ColumnData{}
 

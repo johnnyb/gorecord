@@ -47,3 +47,10 @@ func WriteFile(fname string, data string) error {
 func ColumnToStructMember(val string) string {
 	return "Raw" + inflect.Camelize(val)
 }
+
+func panicIfError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
