@@ -1,8 +1,8 @@
 package generator
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
 	"github.com/johnnyb/gorecord/inflect"
 )
 
@@ -25,6 +25,10 @@ func LoadColumnData(db *sql.DB, cfg Config, tableName string) []ColumnData {
 
 	ctypes, err := rows.ColumnTypes()
 	panicIfError(err)
+
+	if len(ctypes) == 0 {
+		panic(fmt.Sprintf("No columns found in table '%s'.  Some database drivers currently require a row to be present in the database to introspect them.", tableName))
+	}
 
 	for _, ctype := range ctypes {
 		name := ctype.Name()
