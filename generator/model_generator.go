@@ -57,7 +57,6 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 		if ctype.DbName == cfg.PrimaryKey {
 			keyColumn = ctype
 		} else {
-			setDbValueCtr += 1
 			allDbNamesNoPk = append(allDbNamesNoPk, ctype.DbName)
 			allStructValuesNoPk = append(allStructValuesNoPk, "rec."+ctype.StructName)
 		}
