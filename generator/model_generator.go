@@ -46,6 +46,7 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	var keyColumn ColumnData
 	setDbValues := []string{}
 
+	setDbValueCtr := 0
 	for cidx, ctype := range columnInfo {
 		if ctype.ColumnPackage != "" {
 			packages[ctype.ColumnPackage] = true
@@ -56,7 +57,8 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 		if ctype.DbName == cfg.PrimaryKey {
 			keyColumn = ctype
 		} else {
-			setDbValues = append(setDbValues, ctype.DbName+" = $"+fmt.Sprintf("%d", (cidx+1)))
+			setDbValueCtr += 1
+			setDbValues = append(setDbValues, ctype.DbName+" = $"+fmt.Sprintf("%d", setDbValueCtr))
 			allDbNamesNoPk = append(allDbNamesNoPk, ctype.DbName)
 			allStructValuesNoPk = append(allStructValuesNoPk, "rec."+ctype.StructName)
 		}
