@@ -6,8 +6,8 @@ import (
 	// "fmt"
 )
 
-type Functor func()error
-type TransactionFunctor func(* sql.Tx) error
+type Functor func() error
+type TransactionFunctor func(*sql.Tx) error
 
 type Querier interface {
 	Prepare(query string) (*sql.Stmt, error)
@@ -33,12 +33,70 @@ func SetConnection(conn *sql.DB) {
 	GlobalTransactionContext = conn
 }
 
+func BuildConnectionString(info map[string]string) string {
+	cstr := ""
+	first := true
+	for k, v := range info {
+		if !first {
+			cstr += " "
+		}
+		if v != "" {
+			cstr += k + "=" + v
+			first = false
+		}
+	}
+
+	return cstr
+}
+
+func GetConnectionDriver() string {
+	driver := os.Getenv("DB_DRIVER")
+
+	if driver == "" {
+		driver = "pgx" // default
+	}
+
+	return driver
+}
+
+// There are multiple ways to infer a connection string.
+func GetConnectionString(testing bool) string {
+	var testprefix string
+	if testing {
+		testprefix = "TEST_"
+	}
+	cstr := os.Getenv("DB_" + testprefix + "CONNECTION_STRING")
+	if cstr == "" {
+		dbname := os.Getenv("RDS_" + testprefix + "DB_NAME")
+		if dbname != "" {
+			host := os.Getenv("RDS_" + testprefix + "HOSTNAME")
+			port := os.Getenv("RDS_" + testprefix + "PORT")
+			user := os.Getenv("RDS_" + testprefix + "USERNAME")
+			pass := os.Getenv("RDS" + testprefix + "PASSWORD")
+			BuildConnectionString(map[string]string{
+				"user":     user,
+				"dbname":   dbname,
+				"host":     host,
+				"password": pass,
+				"port":     port,
+			})
+		}
+	}
+
+	return cstr
+}
+
 // If you want to automagically set the connection, do this
 func AutoConnect() (db *sql.DB, err error) {
-	db, err = sql.Open(os.Getenv("DB_DRIVER"), os.Getenv("DB_CONNECTION_STRING"))
+	db, err = sql.Open(GetConnectionDriver(), GetConnectionString(false))
 	if err == nil {
 		SetConnection(db)
 	}
+	return
+}
+
+func AutoConnectForTesting() (db *sql.DB, err error) {
+	db, err = sql.Open(GetConnectionDriver(), GetConnectionString(true))
 	return
 }
 
@@ -53,14 +111,14 @@ func IsInGlobalTransaction() bool {
 // in progress, this will happen (INCLUDING
 // the rollback) in the existing transaction.
 func WithGlobalTransaction(f Functor) error {
-	if(IsInGlobalTransaction()) {
+	if IsInGlobalTransaction() {
 		err := f()
 		if err != nil {
 			currentTransaction.Rollback()
 		}
 		return err
 	} else {
-		WithDBTransaction(GlobalConnection, func(tx *sql.Tx)error {
+		WithDBTransaction(GlobalConnection, func(tx *sql.Tx) error {
 			GlobalTransactionContext = tx
 			currentTransaction = tx
 			return f()
@@ -84,4 +142,3 @@ func WithDBTransaction(db *sql.DB, f TransactionFunctor) error {
 
 	return err
 }
-

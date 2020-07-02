@@ -230,6 +230,19 @@ already setup with the relationship.
 
 Don't forget to run `go generate` in the `models` directory to make sure the files are implemented!
 
-### Enjoy!
+## Testing
+
+Most people have separate testing and primary databases.
+Therefore, you need to set the `DB_TEST_CONNECTION_STRING` to
+the connection you want to use for testing.  The system
+will not use the main `DB_CONNECTION_STRING` for testing.
+
+## RDS
+
+In addition to standard connection strings, this also supports RDS connection
+information through the standard RDS environment variables.
+Additionally, test info can be supplied through `RDS_TEST_HOSTNAME`, `RDS_TEST_DB_NAME`, etc.
+
+## Enjoy!
 
 I hope you enjoy GoRecord.  It is still in its early stages of development, but it is already pretty fun to play with.
