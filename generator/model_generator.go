@@ -53,10 +53,10 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 		allDbNames = append(allDbNames, ctype.DbName)
 		allStructPointers = append(allStructPointers, "&rec."+ctype.StructName)
 		allStructValues = append(allStructValues, "rec."+ctype.StructName)
-		setDbValues = append(setDbValues, ctype.DbName+" = $"+fmt.Sprintf("%d", cidx))
 		if ctype.DbName == cfg.PrimaryKey {
 			keyColumn = ctype
 		} else {
+			setDbValues = append(setDbValues, ctype.DbName+" = $"+fmt.Sprintf("%d", (cidx+1)))
 			allDbNamesNoPk = append(allDbNamesNoPk, ctype.DbName)
 			allStructValuesNoPk = append(allStructValuesNoPk, "rec."+ctype.StructName)
 		}
