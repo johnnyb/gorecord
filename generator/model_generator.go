@@ -46,19 +46,18 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	var keyColumn ColumnData
 	setDbValues := []string{}
 
-	setDbValueCtr := 0
-	for _, ctype := range columnInfo {
+	for cidx, ctype := range columnInfo {
 		if ctype.ColumnPackage != "" {
 			packages[ctype.ColumnPackage] = true
 		}
 		allDbNames = append(allDbNames, ctype.DbName)
 		allStructPointers = append(allStructPointers, "&rec."+ctype.StructName)
 		allStructValues = append(allStructValues, "rec."+ctype.StructName)
+		setDbValues = append(setDbValues, ctype.DbName+" = $"+fmt.Sprintf("%d", cidx + 1))
 		if ctype.DbName == cfg.PrimaryKey {
 			keyColumn = ctype
 		} else {
 			setDbValueCtr += 1
-			setDbValues = append(setDbValues, ctype.DbName+" = $"+fmt.Sprintf("%d", setDbValueCtr))
 			allDbNamesNoPk = append(allDbNamesNoPk, ctype.DbName)
 			allStructValuesNoPk = append(allStructValuesNoPk, "rec."+ctype.StructName)
 		}
