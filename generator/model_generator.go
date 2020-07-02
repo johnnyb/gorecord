@@ -47,7 +47,7 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	setDbValues := []string{}
 
 	setDbValueCtr := 0
-	for cidx, ctype := range columnInfo {
+	for _, ctype := range columnInfo {
 		if ctype.ColumnPackage != "" {
 			packages[ctype.ColumnPackage] = true
 		}
