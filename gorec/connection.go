@@ -97,6 +97,9 @@ func AutoConnect() (db *sql.DB, err error) {
 
 func AutoConnectForTesting() (db *sql.DB, err error) {
 	db, err = sql.Open(GetConnectionDriver(), GetConnectionString(true))
+	if err == nil {
+		SetConnection(db)
+	}
 	return
 }
 
