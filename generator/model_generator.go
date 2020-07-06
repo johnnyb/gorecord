@@ -160,7 +160,7 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	for _, ctype := range columnInfo {
 		attrStr += "\t\t" + `"` + ctype.FuncName + `": rec.` + ctype.StructName + ",\n"
 	}
-	cfg.WriteMethod(fh, "StructAttributes", "() map[string]interface{}", "\treturn map[string]interface{} {\n"+attrStr+"\t}\n")
+	cfg.WriteMethod(fh, "Attributes", "() map[string]interface{}", "\treturn map[string]interface{} {\n"+attrStr+"\t}\n")
 
 	attrStr = ""
 	for _, ctype := range columnInfo {
@@ -172,5 +172,5 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	for _, ctype := range columnInfo {
 		attrStr += "\t" + `if val, ok = dict["` + ctype.FuncName + `"]; ok {` + "\n\t\trec.Set" + ctype.FuncName + "WithArbitraryType(val)\n\t}\n"
 	}
-	cfg.WriteMethod(fh, "AssignUsingStructAttributes", "(dict map[string]interface{})", "\tvar ok bool\n\tvar val interface{}\n"+attrStr)
+	cfg.WriteMethod(fh, "AssignUsingAttributes", "(dict map[string]interface{})", "\tvar ok bool\n\tvar val interface{}\n"+attrStr)
 }
