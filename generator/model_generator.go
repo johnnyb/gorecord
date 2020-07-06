@@ -53,7 +53,7 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 		allDbNames = append(allDbNames, ctype.DbName)
 		allStructPointers = append(allStructPointers, "&rec."+ctype.StructName)
 		allStructValues = append(allStructValues, "rec."+ctype.StructName)
-		setDbValues = append(setDbValues, ctype.DbName+" = $"+fmt.Sprintf("%d", cidx + 1))
+		setDbValues = append(setDbValues, ctype.DbName+" = $"+fmt.Sprintf("%d", cidx+1))
 		if ctype.DbName == cfg.PrimaryKey {
 			keyColumn = ctype
 		} else {
@@ -88,6 +88,7 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	for _, cdata := range columnInfo {
 		cfg.WriteMethod(fh, cdata.FuncName, "() "+cdata.ColumnType, "\treturn rec."+cdata.StructName+"\n")
 		cfg.WriteMethod(fh, "Set"+cdata.FuncName, "(val "+cdata.ColumnType+")", "\trec."+cdata.StructName+" = val\n")
+		cfg.WriteMethod(fh, "Set"+cdata.FuncName+"WithArbitraryType", "(val interface{})", "\t// Not yet implemented - convert to correct type then call Set() method\n")
 	}
 
 	// Write standard functions
@@ -148,4 +149,28 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 		return nil
 	}
 `)
+
+	var attrStr string
+	for _, ctype := range columnInfo {
+		attrStr += "\t\t" + `"` + ctype.DbName + `": rec.` + ctype.StructName + ",\n"
+	}
+	cfg.WriteMethod(fh, "DbAttributes", "() map[string]interface{}", "\treturn map[string]interface{} {\n"+attrStr+"\t}\n")
+
+	attrStr = ""
+	for _, ctype := range columnInfo {
+		attrStr += "\t\t" + `"` + ctype.FuncName + `": rec.` + ctype.StructName + ",\n"
+	}
+	cfg.WriteMethod(fh, "StructAttributes", "() map[string]interface{}", "\treturn map[string]interface{} {\n"+attrStr+"\t}\n")
+
+	attrStr = ""
+	for _, ctype := range columnInfo {
+		attrStr += "\t" + `if val, ok = dict["` + ctype.DbName + `"]; ok {` + "\n\t\trec.Set" + ctype.FuncName + "WithArbitraryType(val)\n\t}\n"
+	}
+	cfg.WriteMethod(fh, "AssignUsingDbAttributes", "(dict map[string]interface{})", "\tvar ok bool\n\tvar val interface{}\n"+attrStr)
+
+	attrStr = ""
+	for _, ctype := range columnInfo {
+		attrStr += "\t" + `if val, ok = dict["` + ctype.FuncName + `"]; ok {` + "\n\t\trec.Set" + ctype.FuncName + "WithArbitraryType(val)\n\t}\n"
+	}
+	cfg.WriteMethod(fh, "AssignUsingStructAttributes", "(dict map[string]interface{})", "\tvar ok bool\n\tvar val interface{}\n"+attrStr)
 }
