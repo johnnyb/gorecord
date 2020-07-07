@@ -96,7 +96,7 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 		cfg.WriteMethod(fh, "Set"+cdata.FuncName, "(val "+cdata.ColumnType+")", "\trec."+cdata.StructName+" = val\n")
 
 		convertFuncName := GetConversionFunctionNameFor(cdata.ColumnType)
-		cfg.WriteMethod(fh, "Set"+cdata.FuncName+"WithArbitraryType", "(val interface{})", "\ttmpval, err := "+convertFuncName+"(val)\n\tif err != nil {\n\t\trec.Set"+cdata.FuncName+"(tmpval)\n\t}\n")
+		cfg.WriteMethod(fh, "Set"+cdata.FuncName+"WithArbitraryType", "(val interface{}) error", "\ttmpval, err := "+convertFuncName+"(val)\n\tif err != nil {\n\t\treturn err\n\t}\n\trec.Set"+cdata.FuncName+"(tmpval)\n\treturn nil\n")
 	}
 
 	// Write standard functions
