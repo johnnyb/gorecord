@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/johnnyb/gorecord/inflect"
 	"io"
 	"os"
+
+	"github.com/johnnyb/gorecord/inflect"
 )
 
 type FileFunc func(io.Writer)
@@ -48,9 +49,24 @@ func ColumnToStructMember(val string) string {
 	return "Raw" + inflect.Camelize(val)
 }
 
+var conversionFunctions = map[string]string{
+	"string":       "gorec.ConvertArbitraryToString",
+	"time.Time":    "gorec.ConvertArbitraryToTime",
+	"interface{}":  "gorec.ConvertArbitraryToArbitrary",
+	"interface {}": "gorec.ConvertArbitraryToArbitrary",
+	"int32":        "gorec.ConvertArbitraryToInt32",
+}
+
+func GetConversionFunctionNameFor(typename string) string {
+	result := conversionFunctions[typename]
+	if result == "" {
+		panic("Couldn't find conversion for " + typename)
+	}
+	return result
+}
+
 func panicIfError(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
-

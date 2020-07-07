@@ -46,9 +46,15 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	var keyColumn ColumnData
 	setDbValues := []string{}
 
+	var updatedAtColumnData *ColumnData
+
 	for cidx, ctype := range columnInfo {
 		if ctype.ColumnPackage != "" {
 			packages[ctype.ColumnPackage] = true
+		}
+		if ctype.DbName == cfg.UpdatedAtColumnName {
+			tmpcdata := ctype // This forces a copy so we don't get the address of something that gets reassigned
+			updatedAtColumnData = &tmpcdata
 		}
 		allDbNames = append(allDbNames, ctype.DbName)
 		allStructPointers = append(allStructPointers, "&rec."+ctype.StructName)
@@ -88,7 +94,9 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	for _, cdata := range columnInfo {
 		cfg.WriteMethod(fh, cdata.FuncName, "() "+cdata.ColumnType, "\treturn rec."+cdata.StructName+"\n")
 		cfg.WriteMethod(fh, "Set"+cdata.FuncName, "(val "+cdata.ColumnType+")", "\trec."+cdata.StructName+" = val\n")
-		cfg.WriteMethod(fh, "Set"+cdata.FuncName+"WithArbitraryType", "(val interface{})", "\t// Not yet implemented - convert to correct type then call Set() method\n")
+
+		convertFuncName := GetConversionFunctionNameFor(cdata.ColumnType)
+		cfg.WriteMethod(fh, "Set"+cdata.FuncName+"WithArbitraryType", "(val interface{})", "\ttmpval, err := "+convertFuncName+"(val)\n\tif err != nil {\n\t\trec.Set"+cdata.FuncName+"(tmpval)\n\t}\n")
 	}
 
 	// Write standard functions
@@ -121,9 +129,18 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	valuePlaceholdersStr := strings.Join(valuePlaceholders, ", ")
 	valuePlaceholdersNoPkStr := strings.Join(valuePlaceholders[:(len(valuePlaceholders)-1)], ", ")
 	setPrimaryKeyPlaceholder := "$" + fmt.Sprintf("%d", (len(setDbValues)+1))
+
+	var touchNoSaveMethod = ""
+	if updatedAtColumnData != nil {
+		touchNoSaveMethod = "rec.TouchWithoutSaving()"
+		cfg.WriteMethod(fh, "TouchWithoutSaving", "()", "\trec."+updatedAtColumnData.StructName+" = time.Now()\n")
+		cfg.WriteMethod(fh, "Touch", "() error", "\trec.TouchWithoutSaving()\n\treturn rec.Save()\n")
+	}
+
 	cfg.WriteMethod(fh, "Save", "() error", `
 	var err error = nil
 	conn := `+ctxFunc+`()
+	`+touchNoSaveMethod+`
 	if rec.IsSaved() {
 		_, err = conn.Exec("UPDATE `+cfg.TableName+` SET `+setDbValuesStr+` WHERE `+cfg.PrimaryKey+` = `+setPrimaryKeyPlaceholder+`", `+allStructValuesStr+`, rec.`+keyColumn.StructName+`)
 		return err

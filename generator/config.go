@@ -6,19 +6,20 @@ import (
 )
 
 type Config struct {
-	Model string
-	TableName string
-	Package string
-	PrimaryKey string
-	RawPrefix string
-	InternalPrefix string
-	SkipFunctions []string
-	OriginalFile string
+	Model               string
+	TableName           string
+	Package             string
+	PrimaryKey          string
+	RawPrefix           string
+	InternalPrefix      string
+	SkipFunctions       []string
+	OriginalFile        string
+	UpdatedAtColumnName string
 
 	// HasMany
 	Relationship string
-	TargetModel string
-	ForeignKey string
+	TargetModel  string
+	ForeignKey   string
 }
 
 func NewConfig() Config {
@@ -27,11 +28,12 @@ func NewConfig() Config {
 	// Deduce the model from the file
 
 	return Config{
-		PrimaryKey: "id",
-		Package: os.Getenv("GOPACKAGE"),
-		RawPrefix: "Raw",
-		InternalPrefix: "Internal",
-		OriginalFile: os.Getenv("GOFILE"),
+		PrimaryKey:          "id",
+		Package:             os.Getenv("GOPACKAGE"),
+		RawPrefix:           "Raw",
+		InternalPrefix:      "Internal",
+		OriginalFile:        os.Getenv("GOFILE"),
+		UpdatedAtColumnName: "updated_at",
 	}
 }
 
@@ -50,7 +52,7 @@ func (cfg *Config) WriteMethod(fh io.Writer, name string, signature string, body
 	}
 }
 
-func (cfg *Config) WriteFunc(fh io.Writer, name string,signature string, body string) {
+func (cfg *Config) WriteFunc(fh io.Writer, name string, signature string, body string) {
 	name = cfg.Model + name
 	if !cfg.ShouldSkipFunc(name) {
 		fh.Write([]byte("func " + name + signature + " {\n" + body + "}\n\n"))
