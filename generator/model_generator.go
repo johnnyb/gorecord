@@ -109,7 +109,7 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	cfg.WriteMethod(fh, "InitializeExisting", "()", fmt.Sprintf("\trec.%sIsSaved = true\n", cfg.InternalPrefix))
 	cfg.WriteMethod(fh, cfg.InternalPrefix+"ScanAllColumns", "(scanner gorec.RowScanner) error", fmt.Sprintf("\terr := scanner.Scan(%s)\n\tif err != nil {\n\t\treturn err\n\t}\n\trec.InitializeExisting()\n\treturn nil\n", allStructPointersStr))
 	cfg.WriteFunc(fh, cfg.InternalPrefix+"DbAttributeNamesString", "() string", fmt.Sprintf("\treturn \"%s\"\n", allDbNamesStr))
-	cfg.WriteFunc(fh, "QuerySimpleWithQuerier", fmt.Sprintf("(querier gorec.Querier, clause string, args ...interface{}) ([]*%s, error)", cfg.Model), fmt.Sprintf("\trows, err := querier.Query(\"SELECT %s FROM %s \" + clause, args...)\n\tresults := []*%s{}\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tfor rows.Next() {\n\t\tnextres := &%s{}\n\t\terr = nextres.%sScanAllColumns(rows)\n\t\tif err != nil {\n\t\t\treturn results, err\n\t\t}\n\t\tresults = append(results, nextres)\n\t}\n\treturn results, nil\n", allDbNamesStr, cfg.TableName, cfg.Model, cfg.Model, cfg.InternalPrefix))
+	cfg.WriteFunc(fh, "QuerySimpleWithQuerier", fmt.Sprintf("(querier gorec.Querier, clause string, args ...interface{}) ([]*%s, error)", cfg.Model), fmt.Sprintf("\trows, err := querier.Query(\"SELECT %s FROM %s \" + clause, args...)\n\tresults := []*%s{}\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tdefer rows.Close()\n\n\tfor rows.Next() {\n\t\tnextres := &%s{}\n\t\terr = nextres.%sScanAllColumns(rows)\n\t\tif err != nil {\n\t\t\treturn results, err\n\t\t}\n\t\tresults = append(results, nextres)\n\t}\n\treturn results, nil\n", allDbNamesStr, cfg.TableName, cfg.Model, cfg.Model, cfg.InternalPrefix))
 	cfg.WriteFunc(fh, "QuerySimple", fmt.Sprintf("(clause string, args ...interface{}) ([]*%s, error)", cfg.Model), fmt.Sprintf("\treturn %sQuerySimpleWithQuerier(%s(), clause, args...)\n", cfg.Model, ctxFunc))
 	cfg.WriteMethod(fh, "Validate", "() bool", "\treturn true\n")
 	cfg.WriteMethod(fh, "PrimaryKey", fmt.Sprintf("() %s", keyColumn.ColumnType), fmt.Sprintf("\treturn rec.%s\n", keyColumn.StructName))
@@ -151,6 +151,8 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 			if err != nil {
 				return err
 			}
+			defer results.Close()
+
 			if !results.Next() {
 				return errors.New("Insert did not return ID")
 			}
