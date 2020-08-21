@@ -73,7 +73,7 @@ func GetConnectionString(testing bool) string {
 			port := os.Getenv("RDS_" + testprefix + "PORT")
 			user := os.Getenv("RDS_" + testprefix + "USERNAME")
 			pass := os.Getenv("RDS" + testprefix + "PASSWORD")
-			BuildConnectionString(map[string]string{
+			cstr := BuildConnectionString(map[string]string{
 				"user":     user,
 				"dbname":   dbname,
 				"host":     host,
