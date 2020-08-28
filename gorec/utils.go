@@ -20,7 +20,7 @@ func MakeFormAssignable(origin map[string][]string) map[string]interface{} {
 }
 
 // This is similar to `MakeFormAssignable` but useful if you don't know if your request will be URL-formatted or JSON-formatted
-func MakeRequestAssignable(req http.Request) map[string]interface{} {
+func MakeRequestAssignable(req *http.Request) map[string]interface{} {
 	ctype := req.Header.Get("Content-Type")
 	if ctype == "application/x-www-form-urlencoded" || ctype == "multipart/form-data" {
 		req.ParseForm()
