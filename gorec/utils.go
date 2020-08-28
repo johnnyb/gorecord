@@ -1,9 +1,9 @@
 package gorec
 
 import (
-	"net/http"
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
 )
 
 // This is useful for a simple conversion of url.Values (i.e., map[string][]string) into a format that is assignable on this system.
@@ -31,7 +31,7 @@ func MakeRequestAssignable(req *http.Request) map[string]interface{} {
 		if err != nil {
 			return newmap
 		}
-		_ = json.Unmarshal(data, newmap)
+		_ = json.Unmarshal(data, &newmap)
 		return newmap
 	}
 }
