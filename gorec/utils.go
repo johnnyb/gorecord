@@ -1,5 +1,11 @@
 package gorec
 
+import (
+	"net/http"
+	"encoding/json"
+	"io/ioutil"
+)
+
 // This is useful for a simple conversion of url.Values (i.e., map[string][]string) into a format that is assignable on this system.
 func MakeFormAssignable(origin map[string][]string) map[string]interface{} {
 	newmap := map[string]interface{}{}
@@ -11,4 +17,21 @@ func MakeFormAssignable(origin map[string][]string) map[string]interface{} {
 		}
 	}
 	return newmap
+}
+
+// This is similar to `MakeFormAssignable` but useful if you don't know if your request will be URL-formatted or JSON-formatted
+func MakeRequestAssignable(req http.Request) map[string]interface{} {
+	ctype := req.Header.Get("Content-Type")
+	if ctype == "application/x-www-form-urlencoded" || ctype == "multipart/form-data" {
+		req.ParseForm()
+		return MakeFormAssignable(req.Form)
+	} else {
+		newmap := map[string]interface{}{}
+		data, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			return newmap
+		}
+		_ = json.Unmarshal(data, newmap)
+		return newmap
+	}
 }

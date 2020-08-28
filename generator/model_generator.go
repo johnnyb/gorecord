@@ -192,4 +192,5 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 		attrStr += "\t" + `if val, ok = dict["` + ctype.FuncName + `"]; ok {` + "\n\t\trec.Set" + ctype.FuncName + "WithArbitraryType(val)\n\t}\n"
 	}
 	cfg.WriteMethod(fh, "AssignUsingAttributes", "(dict map[string]interface{})", "\tvar ok bool\n\tvar val interface{}\n"+attrStr)
+	cfg.WriteMethod(fh, "Destroy", "() error", "\tconn := "+ctxFunc+"()\n\t_, err := "+`conn.Query("DELETE FROM `+cfg.TableName+" WHERE "+cfg.PrimaryKey+` = $1", rec.`+keyColumn.StructName+")\n\treturn err\n")
 }
