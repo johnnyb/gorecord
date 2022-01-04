@@ -40,5 +40,6 @@ func WriteBelongsTo(fh io.Writer, db *sql.DB, cfg Config) {
 		return nil, nil
 	}
 	return recs[0], nil
-}`)
+}
+`)
 }

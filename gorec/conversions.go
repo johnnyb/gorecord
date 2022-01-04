@@ -5,7 +5,25 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"strings"
 )
+
+func ConvertArbitraryToBool(val interface{}) (bool, error) {
+	switch newval := val.(type) {
+		case string:
+			newval = strings.ToLower(newval)
+			switch newval {
+				case "t", "y", "1":
+					return true, nil
+				default:
+					return false, nil
+			}
+		case bool:
+			return newval, nil
+		default:
+			return false, errors.New("Could not convert")
+	}
+}
 
 func ConvertArbitraryToTime(val interface{}) (time.Time, error) {
 	switch newval := val.(type) {

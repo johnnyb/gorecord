@@ -50,6 +50,7 @@ func ColumnToStructMember(val string) string {
 }
 
 var conversionFunctions = map[string]string{
+	"bool":         "gorec.ConvertArbitraryToBool",
 	"string":       "gorec.ConvertArbitraryToString",
 	"time.Time":    "gorec.ConvertArbitraryToTime",
 	"interface{}":  "gorec.ConvertArbitraryToArbitrary",
