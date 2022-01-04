@@ -22,14 +22,19 @@ So, when doing the examples, after the migration, add a record manually before r
 
 ## Installing
 
-First, grab the generating command:
+First, grab the library
 
 ```
 go get github.com/johnnyb/gorecord/...
 ```
 
-This will get both the library and the command (if you just import the library, you won't get 
-the `gorec` command).
+Then install the generator
+
+```
+go install github.com/johnnyb/gorecord/cmd/gorec@latest
+```
+
+This will get both the library and the command (if you just import the library, you won't get the `gorec` command).
 
 ## Building an Example Program
 
