@@ -7,12 +7,12 @@ import (
 )
 
 type ColumnData struct {
-	DbName string
-	StructName string
-	FuncName string
-	ColumnType string
+	DbName        string
+	StructName    string
+	FuncName      string
+	ColumnType    string
 	ColumnPackage string
-	Nullable bool
+	Nullable      bool
 }
 
 func LoadColumnData(db *sql.DB, cfg Config, tableName string) []ColumnData {
@@ -48,12 +48,12 @@ func LoadColumnData(db *sql.DB, cfg Config, tableName string) []ColumnData {
 		structName := cfg.RawPrefix + funcName
 
 		cdata := ColumnData{
-			DbName: name,
-			StructName: structName,
-			FuncName: funcName,
-			ColumnType: tpPartial,
+			DbName:        name,
+			StructName:    structName,
+			FuncName:      funcName,
+			ColumnType:    tpPartial,
 			ColumnPackage: tpPackage,
-			Nullable: nullable,
+			Nullable:      nullable,
 		}
 
 		columnInfo = append(columnInfo, cdata)
@@ -61,5 +61,3 @@ func LoadColumnData(db *sql.DB, cfg Config, tableName string) []ColumnData {
 
 	return columnInfo
 }
-
-
