@@ -7,6 +7,7 @@ import (
 	"time"
 	"strings"
 	"database/sql"
+	"github.com/google/uuid"
 )
 
 func ConvertArbitraryToBool(val interface{}) (bool, error) {
@@ -165,4 +166,29 @@ func ConvertArbitraryToNullString(val interface{}) (sql.NullString, error) {
 
 func ConvertArbitraryToArbitrary(val interface{}) (interface{}, error) {
 	return val, nil
+}
+
+func ConvertArbitraryToNullUUID(val interface{}) (uuid.NullUUID, error) {
+	result := uuid.NullUUID{}
+	var err error
+
+	if val == nil {
+		return result, nil
+	}
+
+	switch newval := val.(type) {
+	case uuid.NullUUID:
+		return newval, nil
+	case uuid.UUID:
+		result.UUID = newval
+		result.Valid = true
+	case string:
+		tmp, err := uuid.Parse(newval)
+		if err == nil {
+			result.UUID = tmp
+			result.Valid = true
+		}
+	}
+
+	return result, err
 }

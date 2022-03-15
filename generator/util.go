@@ -50,16 +50,17 @@ func ColumnToStructMember(val string) string {
 }
 
 var conversionFunctions = map[string]string{
-	"bool":         "gorec.ConvertArbitraryToBool",
-	"string":       "gorec.ConvertArbitraryToString",
-	"time.Time":    "gorec.ConvertArbitraryToTime",
-	"interface{}":  "gorec.ConvertArbitraryToArbitrary",
-	"interface {}": "gorec.ConvertArbitraryToArbitrary",
-	"int32":        "gorec.ConvertArbitraryToInt32",
-	"sql.NullTime": "gorec.ConvertArbitraryToNullTime",
-	"sql.NullInt32": "gorec.ConvertArbitraryToNullInt32",
-	"sql.NullInt64": "gorec.ConvertArbitraryToNullInt64",
+	"bool":           "gorec.ConvertArbitraryToBool",
+	"string":         "gorec.ConvertArbitraryToString",
+	"time.Time":      "gorec.ConvertArbitraryToTime",
+	"interface{}":    "gorec.ConvertArbitraryToArbitrary",
+	"interface {}":   "gorec.ConvertArbitraryToArbitrary",
+	"int32":          "gorec.ConvertArbitraryToInt32",
+	"sql.NullTime":   "gorec.ConvertArbitraryToNullTime",
+	"sql.NullInt32":  "gorec.ConvertArbitraryToNullInt32",
+	"sql.NullInt64":  "gorec.ConvertArbitraryToNullInt64",
 	"sql.NullString": "gorec.ConvertArbitraryToNullString",
+	"uuid.NullUUID":  "gorec.ConvertArbitraryToNullUUID",
 }
 
 func GetConversionFunctionNameFor(typename string) string {

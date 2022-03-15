@@ -3,8 +3,9 @@ package generator
 import (
 	"database/sql"
 	"fmt"
-	"reflect"
+	"github.com/google/uuid"
 	"github.com/johnnyb/gorecord/inflect"
+	"reflect"
 	"time"
 )
 
@@ -26,6 +27,7 @@ var int64Type = reflect.TypeOf(int64(0))
 var timeType = reflect.TypeOf(time.Time{})
 var byteType = reflect.TypeOf(byte(0))
 var float64Type = reflect.TypeOf(float64(0))
+var uuidType = reflect.TypeOf(uuid.UUID{})
 
 func LoadColumnData(db *sql.DB, cfg Config, tableName string) []ColumnData {
 	columnInfo := []ColumnData{}
@@ -47,7 +49,7 @@ func LoadColumnData(db *sql.DB, cfg Config, tableName string) []ColumnData {
 		funcName := inflect.Camelize(name)
 		structName := cfg.RawPrefix + funcName
 		// precision, scale, ok := ctype.DecimalSize()
-		// dbtype := ctype.DatabaseTypeName()
+		dbtype := ctype.DatabaseTypeName()
 
 		cdata := ColumnData{
 			DbName:        name,
@@ -58,7 +60,15 @@ func LoadColumnData(db *sql.DB, cfg Config, tableName string) []ColumnData {
 			ColumnPackage: "database/sql",
 		}
 		tp := ctype.ScanType()
+
+		if dbtype == "UUID" {
+			tp = uuidType
+		}
+
 		switch tp {
+		case uuidType:
+			cdata.ColumnType = "uuid.NullUUID"
+			cdata.ColumnPackage = "github.com/google/uuid"
 		case stringType:
 			cdata.ColumnType = "sql.NullString"
 		case int16Type:
@@ -84,7 +94,7 @@ func LoadColumnData(db *sql.DB, cfg Config, tableName string) []ColumnData {
 			if !ok {
 				nullable = true
 			}
-			
+
 			if nullable {
 				tpPartial = "*" + tpPartial
 			}
