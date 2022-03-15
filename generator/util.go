@@ -56,6 +56,10 @@ var conversionFunctions = map[string]string{
 	"interface{}":  "gorec.ConvertArbitraryToArbitrary",
 	"interface {}": "gorec.ConvertArbitraryToArbitrary",
 	"int32":        "gorec.ConvertArbitraryToInt32",
+	"sql.NullTime": "gorec.ConvertArbitraryToNullTime",
+	"sql.NullInt32": "gorec.ConvertArbitraryToNullInt32",
+	"sql.NullInt64": "gorec.ConvertArbitraryToNullInt64",
+	"sql.NullString": "gorec.ConvertArbitraryToNullString",
 }
 
 func GetConversionFunctionNameFor(typename string) string {
