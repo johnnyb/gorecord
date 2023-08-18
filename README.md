@@ -15,11 +15,6 @@ This is a brand new project, so don't expect full magic.  Also, currently this e
 
 For some of the thinking behind the way that this project is stuctured, see this short article on [Automated Code Generation](https://mindmatters.ai/2020/05/automated-code-generation-tools-can-solve-problems/).
 
-## IMPORTANT
-
-At the moment, `go generate` only works if there is at least one record in the database.
-So, when doing the examples, after the migration, add a record manually before running `go generate`.  I hope to fix this shortly.
-
 ## Installing
 
 First, grab the library

@@ -114,12 +114,16 @@ func WriteModel(fh io.Writer, db *sql.DB, cfg Config) {
 	cfg.WriteMethod(fh, "Validate", "() bool", "\treturn true\n")
 	cfg.WriteMethod(fh, "PrimaryKey", fmt.Sprintf("() %s", keyColumn.ColumnType), fmt.Sprintf("\treturn rec.%s\n", keyColumn.StructName))
 	cfg.WriteMethod(fh, "IsSaved", "() bool", fmt.Sprintf("\treturn rec.%sIsSaved\n", cfg.InternalPrefix))
-	if keyColumn.ColumnType == "string" {
-		cfg.WriteMethod(fh, fmt.Sprintf("%sPrimaryKeyIsPresent", cfg.InternalPrefix), "() bool", fmt.Sprintf("\treturn rec.%s != \"\"\n", keyColumn.StructName))
-	} else if keyColumn.ColumnType == "int32" || keyColumn.ColumnType == "int64" {
-		cfg.WriteMethod(fh, fmt.Sprintf("%sPrimaryKeyIsPresent", cfg.InternalPrefix), "() bool", fmt.Sprintf("\treturn rec.%s != 0\n", keyColumn.StructName))
+	if keyColumn.SqlNullable {
+		cfg.WriteMethod(fh, fmt.Sprintf("%sPrimaryKeyIsPresent", cfg.InternalPrefix), "() bool", fmt.Sprintf("\treturn rec.%s.Valid\n", keyColumn.StructName))
 	} else {
-		cfg.WriteMethod(fh, fmt.Sprintf("%sPrimaryKeyIsPresent", cfg.InternalPrefix), "() bool", fmt.Sprintf("\treturn rec.%s != nil\n", keyColumn.StructName))
+		if keyColumn.ColumnType == "string" {
+			cfg.WriteMethod(fh, fmt.Sprintf("%sPrimaryKeyIsPresent", cfg.InternalPrefix), "() bool", fmt.Sprintf("\treturn rec.%s != \"\"\n", keyColumn.StructName))
+		} else if keyColumn.ColumnType == "int32" || keyColumn.ColumnType == "int64" {
+			cfg.WriteMethod(fh, fmt.Sprintf("%sPrimaryKeyIsPresent", cfg.InternalPrefix), "() bool", fmt.Sprintf("\treturn rec.%s != 0\n", keyColumn.StructName))
+		} else {
+			cfg.WriteMethod(fh, fmt.Sprintf("%sPrimaryKeyIsPresent", cfg.InternalPrefix), "() bool", fmt.Sprintf("\treturn rec.%s != nil\n", keyColumn.StructName))
+		}
 	}
 	cfg.WriteMethod(fh, "AutoGeneratePrimaryKey", "()", "\t// Do nothing by default (assume the db will do this)\n")
 	valuePlaceholders := []string{}
